@@ -19,5 +19,5 @@ Thoughtworks BCI project
 - 4) `$ pip install -r requirements.txt`
 - 5) Within `sentiment` directory, set `export GOOGLE_APPLICATION_CREDENTIALS=` to the path of credentials. (i.e. `export GOOGLE_APPLICATION_CREDENTIALS='../art-a-hack-c0761036ca8c.json'`)
 - 6) To analyze sentiment, CD into `sentiment`
-- 7) To test sentiment analysis, run `python sentiment_analysis.py` for a `.txt` file. For example, you can run sentiment analysis on a sample text by doing `python sentiment_analysis.py pos.txt` and the sentiment score will display in the terminal.
+- 7) To test sentiment analysis, run `python sentiment_analysis.py` for a `.txt` file. For example, you can run sentiment analysis on a sample text by doing `python sentiment_analysis.py resouces/pos.txt` and the sentiment score will display in the terminal.
 
