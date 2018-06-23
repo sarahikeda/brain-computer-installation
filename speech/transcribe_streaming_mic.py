@@ -34,6 +34,7 @@ import argparse
 import pyaudio
 import six
 
+from flask import Flask, render_template
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types as speechTypes
@@ -48,6 +49,7 @@ from six.moves import queue
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
+app = Flask(__name__)
 
 
 class MicrophoneStream(object):
@@ -118,35 +120,14 @@ class MicrophoneStream(object):
 
 
 def listen_print_loop(responses):
-    """Iterates through server responses and prints them.
-
-    The responses passed is a generator that will block until a response
-    is provided by the server.
-
-    Each response may contain multiple results, and each result may contain
-    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
-    print only the transcription for the top alternative of the top result.
-
-    In this case, responses are provided for interim results as well. If the
-    response is an interim one, print a line feed at the end of it, to allow
-    the next result to overwrite it, until the response is a final one. For the
-    final one, print a newline to preserve the finalized transcription.
-    """
     num_chars_printed = 0
     for response in responses:
         if not response.results:
             continue
-
-        # The `results` list is consecutive. For streaming, we only care about
-        # the first result being considered, since once it's `is_final`, it
-        # moves on to considering the next utterance.
         result = response.results[0]
         if not result.alternatives:
             continue
-
-        # Display the transcription of the top alternative.
         transcript = result.alternatives[0].transcript
-        
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
@@ -157,7 +138,7 @@ def listen_print_loop(responses):
 
         else:
             text = transcript + overwrite_chars
-            analyze(text)
+            return analyze(text)
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
             if re.search(r'\b(exit|quit|stop)\b', transcript, re.I):
@@ -170,18 +151,16 @@ def listen_print_loop(responses):
 # [START def_analyze]
 def analyze(text):
     print text
-    # """Run a sentiment analysis request on text within a passed filename."""
     sentimentClient = language.LanguageServiceClient()
-    # Instantiates a plain text document.
     document = sentimentTypes.Document(
     content=text,
     type=sentimentEnums.Document.Type.PLAIN_TEXT)
 
     annotations = sentimentClient.analyze_sentiment(document)
 
-    print annotations.document_sentiment
+    return annotations.document_sentiment
 
-
+@app.route('/')
 def main():
     language_code = 'en-US'
     client = speech.SpeechClient()
@@ -200,7 +179,13 @@ def main():
 
         responses = client.streaming_recognize(streaming_config, requests)
         # Now, put the transcription responses to use.
-        listen_print_loop(responses)
+        results = listen_print_loop(responses)
+        final_results = {}
+        final_results['mag'] = results.magnitude
+        final_results['score'] = results.score
+        # final_results['statement'] = responses
+        return render_template("index.html", sentiment=final_results)
 
 if __name__ == '__main__':
-    main()
+    app.run()
+    # main()

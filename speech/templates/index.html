@@ -1,0 +1,8 @@
+<h1>The results are in.</h1>
+<p>Magnitude: <span id="mag"></span></p>
+<p>Score: <span id="score"></span></p>
+<script>
+    var sentiment = JSON.parse('{{ sentiment | tojson | safe}}');
+    document.getElementById('mag').innerHTML = sentiment.mag;
+    document.getElementById('score').innerHTML = sentiment.score;
+</script>
