@@ -184,6 +184,7 @@ def main():
         final_results['mag'] = results.magnitude
         final_results['score'] = results.score
         # final_results['statement'] = responses
+        
         return render_template("index.html", sentiment=final_results)
 
 if __name__ == '__main__':
