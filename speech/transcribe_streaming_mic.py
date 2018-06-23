@@ -30,11 +30,18 @@ from __future__ import division
 
 import re
 import sys
+import argparse
+import pyaudio
+import six
 
 from google.cloud import speech
 from google.cloud.speech import enums
-from google.cloud.speech import types
-import pyaudio
+from google.cloud.speech import types as speechTypes
+from google.cloud import language
+from google.cloud.language import enums as sentimentEnums
+from google.cloud.language import types as sentimentTypes
+from docx import Document
+
 from six.moves import queue
 # [END import_libraries]
 
@@ -127,7 +134,6 @@ def listen_print_loop(responses):
     """
     num_chars_printed = 0
     for response in responses:
-        print response
         if not response.results:
             continue
 
@@ -135,18 +141,12 @@ def listen_print_loop(responses):
         # the first result being considered, since once it's `is_final`, it
         # moves on to considering the next utterance.
         result = response.results[0]
-        print result
         if not result.alternatives:
             continue
 
         # Display the transcription of the top alternative.
         transcript = result.alternatives[0].transcript
-        print transcript
-        # Display interim results, but with a carriage return at the end of the
-        # line, so subsequent lines will overwrite them.
-        #
-        # If the previous result was longer than this one, we need to print
-        # some extra spaces to overwrite the previous result
+        
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
         if not result.is_final:
@@ -156,42 +156,51 @@ def listen_print_loop(responses):
             num_chars_printed = len(transcript)
 
         else:
-            print(transcript + overwrite_chars)
-
+            text = transcript + overwrite_chars
+            analyze(text)
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
-            if re.search(r'\b(exit|quit)\b', transcript, re.I):
+            if re.search(r'\b(exit|quit|stop)\b', transcript, re.I):
                 print('Exiting..')
                 break
 
             num_chars_printed = 0
 
 
+# [START def_analyze]
+def analyze(text):
+    print text
+    # """Run a sentiment analysis request on text within a passed filename."""
+    sentimentClient = language.LanguageServiceClient()
+    # Instantiates a plain text document.
+    document = sentimentTypes.Document(
+    content=text,
+    type=sentimentEnums.Document.Type.PLAIN_TEXT)
+
+    annotations = sentimentClient.analyze_sentiment(document)
+
+    print annotations.document_sentiment
+
+
 def main():
-    # See http://g.co/cloud/speech/docs/languages
-    # for a list of supported languages.
-    language_code = 'en-US'  # a BCP-47 language tag
-    print "initial"
+    language_code = 'en-US'
     client = speech.SpeechClient()
-    config = types.RecognitionConfig(
+    config = speechTypes.RecognitionConfig(
         encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=RATE,
         language_code=language_code)
-    streaming_config = types.StreamingRecognitionConfig(
+    streaming_config = speechTypes.StreamingRecognitionConfig(
         config=config,
         interim_results=True)
 
     with MicrophoneStream(RATE, CHUNK) as stream:
         audio_generator = stream.generator()
-        requests = (types.StreamingRecognizeRequest(audio_content=content)
+        requests = (speechTypes.StreamingRecognizeRequest(audio_content=content)
                     for content in audio_generator)
 
         responses = client.streaming_recognize(streaming_config, requests)
-        print "hi"
-        print responses
         # Now, put the transcription responses to use.
         listen_print_loop(responses)
-
 
 if __name__ == '__main__':
     main()

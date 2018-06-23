@@ -1,4 +1,4 @@
-#!/Users/sarah/Desktop/art-a-hack/brain-computer-interface/env/bin/python
+#!/Users/sarah/Desktop/art-a-hack/brain-computer-interface/speech/env/bin/python
 
 import sys
 import getopt
