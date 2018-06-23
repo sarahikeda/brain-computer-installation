@@ -148,16 +148,19 @@ def listen_print_loop(responses):
             num_chars_printed = 0
 
 
-# [START def_analyze]
+# starts analysis of sentiment using Google Cloud API
 def analyze(text):
     print text
     sentimentClient = language.LanguageServiceClient()
+    # creates initial document as digestible format for Sentiment API (wouldn't allow a string directly)
     document = sentimentTypes.Document(
     content=text,
     type=sentimentEnums.Document.Type.PLAIN_TEXT)
 
+    # analyze sentiment
     annotations = sentimentClient.analyze_sentiment(document)
 
+    # returns magnitude and score
     return annotations.document_sentiment
 
 @app.route('/')
@@ -178,15 +181,15 @@ def main():
                     for content in audio_generator)
 
         responses = client.streaming_recognize(streaming_config, requests)
-        # Now, put the transcription responses to use.
+        # retrieves results with sentiment analysis
         results = listen_print_loop(responses)
-        final_results = {}
-        final_results['mag'] = results.magnitude
-        final_results['score'] = results.score
-        # final_results['statement'] = responses
-        
-        return render_template("index.html", sentiment=final_results)
+
+        # create dictionary to send results to HTML template
+        formatted_results = {}
+        formatted_results['mag'] = results.magnitude
+        formatted_results['score'] = results.score
+
+        return render_template("index.html", sentiment=formatted_results)
 
 if __name__ == '__main__':
     app.run()
-    # main()

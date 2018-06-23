@@ -8,8 +8,6 @@
     var sentiment = JSON.parse('{{ sentiment | tojson | safe}}');
     document.getElementById('mag').innerHTML = sentiment.mag;
     document.getElementById('score').innerHTML = sentiment.score;
-    // when it gets to the end of the line make a new line
-
 
     function setup() {
     createCanvas(820, 500);
