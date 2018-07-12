@@ -6,94 +6,70 @@
     // document.getElementById('mag').innerHTML = sentiment.mag;
     // document.getElementById('score').innerHTML = sentiment.score;
     var system;
-    var magnitude = sentiment.mag + 0.2
+    var magnitude;
 
-    // score range:-1 to 1
-    var score;
-    if (sentiment.score < 0) {
-      score = 0
+    if (sentiment.mag < 2) {
+      // teal is meditative, low magnitude
+      magnitude = 180
     } else {
-      score = sentiment.score * 4;
+      // purple is engaged, higher magnitude
+      magnitude = 300
     }
 
-    // var score = 0.4;
-    // magnitude range: 0 to 4
-    // score range:-1 to 1
-    // - magnitude changes the size of the Particles
-    // - score changes the saturation
-    // https://p5js.org/examples/simulate-particle-system.html
-    // bubbles.wav from https://freesound.org/people/angeliqueperdikes/sounds/327045/
 
+    // score range:-1 to 1, changes the size
+    var score;
+    // negative sentiment, small
+    if (sentiment.score < 0) {
+      score = 10
+    } else {
+      // positive sentiment, big
+      score = 20
+    }
+
+
+    var n = 100 + 50*(score+1);
+    var t,dt;
+    var myscale;
+    var keyHue = 0.0;
+
+    var saveStill = false;
     function setup() {
-      createCanvas(1000, 800);
-      // origin
-      system = new ParticleSystem(createVector(width/2, height/2));
+      var side = windowWidth< windowHeight ? windowWidth : windowHeight ;
+      createCanvas(side,side);
+      background(255);
+      colorMode(HSB,360,1.0,1.0);
+      background(0,0,1.0);
+
+      // controls how big the image is
+      var foo = 15 + 10*((score + 1)/2);
+      myscale = score;
+      t = 0.0;
+      dt = 0.02;
     }
 
     function draw() {
-      background(0);
-      system.addParticle();
-      system.run();
+      t += dt;
+      for(var i=0;i<n;i++){
+        var theta = 2.39996*i;
+          var r = myscale*sqrt(i);
+        noStroke();
+        var s = i/float(n);
+        fill(magnitude, 1.0-2.0*s, 0.5 + s);
 
-    }
-
-    // A simple Particle class
-    var Particle = function(position) {
-      this.acceleration = createVector(score/20, 0);
-      this.velocity = createVector(random(-1, 1), random(-1, 1));
-      this.position = position.copy();
-      this.lifespan = 255;
-      // randomize
-      this.r = (score + 1.1) * random(0, 121);
-      this.g = (score + 1.1) * random(0, 121);
-      this.b = (score + 1.1) * random(0, 121);
-      // this.randomSize = random(0.6, 1);
-    };
-
-    Particle.prototype.run = function() {
-      this.update();
-      this.display();
-    };
-
-    // Method to update position
-    Particle.prototype.update = function(){
-      this.velocity.add(this.acceleration);
-      this.position.add(this.velocity);
-      this.lifespan -= 2;
-    };
-
-    // Method to display
-    Particle.prototype.display = function() {
-      stroke(150, this.lifespan);
-      stroke(color(this.r, this.g, this.b));
-      strokeWeight(8);
-      fill(color(this.r, this.g, this.b));
-      ellipse((this.position.x-300), this.position.y,
-              magnitude * 12, magnitude * 12);
-    };
-
-    Particle.prototype.isDead = function(){
-      return this.lifespan < 0;
-    };
-
-    var ParticleSystem = function(position) {
-      this.origin = position.copy();
-      this.particles = [];
-    };
-
-    ParticleSystem.prototype.addParticle = function() {
-      this.particles.push(new Particle(this.origin));
-    };
-
-    ParticleSystem.prototype.run = function() {
-      for (var i = this.particles.length-1; i >= 0; i--) {
-        var p = this.particles[i];
-        p.run();
-        if (p.isDead()) {
-          this.particles.splice(i, 1);
+        var d = myscale*(5 + 0.5*sin(t + r));
+        if(saveStill){
+            d = myscale*5;
         }
+
+        ellipse(0.5*width + r*sin(theta),0.5*height + r*cos(theta), d, d);
       }
-    };
+
+      if(saveStill){
+        saveCanvas('vogelTunnel', 'png');
+        noLoop();
+      }
+    }
 
 </script>
 
